@@ -1,0 +1,598 @@
+from tkinter import *
+import tkinter as tk
+from tkinter import ttk
+from tkinter import font
+
+menu_color = "red"
+scale_color = "white"
+shaps_color='tan'
+size=[]
+btn_data={}
+shap_data={}
+
+
+header='''from tkinter import *
+import tkinter as tk
+from tkinter import ttk
+from tkinter import font
+
+
+class PROJECT(tk.Tk):
+    def __init__(self,master=None):
+        tk.Tk.__init__(self,master)
+        self.drawing = Canvas(highlightbackground="green",  bg='tan',
+                            highlightcolor="green", highlightthickness=2, scrollregion=(0, 0, "20i", "20i")  )
+
+        self.drawing.pack( fill='both', anchor=S, expand=True)'''
+
+
+footer='''win=PROJECT()
+win.mainloop()'''
+
+class Con(tk.Toplevel):
+    def __init__(self, *args, **kwargs):
+        tk.Toplevel.__init__(self, *args, **kwargs)
+        w,h=575,50
+        ws = Main_info.winfo_screenwidth(self)
+        hs = Main_info.winfo_screenheight(self)
+        x = (ws / 2) - (w/2)
+        y = (hs / 2) - (h)
+
+        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
+        self.attributes("-topmost", True)
+        self.overrideredirect(True)
+        filename=Entry(self,width=50,font=30)
+        filename.insert(tk.END,'project')
+        filename.place(x=10,y=10,height=30)
+        btn=Button(self,text='Ok',  command=lambda :self.conv(filename.get()))
+
+        btn.pack(side='right',padx=10)
+        btn=Button(self,text='Cancel',command=lambda :self.destroy())
+        btn.pack(side='right',padx=10)
+    def conv(self, name):
+        f = open(name + ".py", "w+")
+        f.write(header)
+
+        for k, V in btn_data.items():
+                f.write("\n")
+                if (k == 'shap'):
+                        f.write(str(f'        shap={V}'))
+                else:
+                        f.write(str(f"        l={V}("))
+
+                        for itm in k.keys():
+                                v = k[itm]
+
+                                if (v != ''):
+                                        f.write(str(itm) + ' = ' + str(f'"{v}"') + ',')
+
+                        f.write(")")
+                        f.write("\n")
+                        p = k.place_info()
+                        del p['in']
+                        f.write(str(f"        l.place("))
+                        for i, j in p.items():
+                                f.write(str(i) + '=' + str(f'"{j}"') + ',')
+
+                        f.write(")")
+        for key,shap in shap_data.items():
+            f.write(str(f'\n        {shap}'))
+        f.write('\n' + footer)
+        f.close()
+
+class Main_info(tk.Tk):
+    def __init__(self, master=None):
+        tk.Tk.__init__(self, master)
+        self.rmv =None
+        self.delt=tk.PhotoImage(file='delete.png')
+        self.new=tk.PhotoImage(file='new_file.png')
+        self.open = tk.PhotoImage(file='opn_f.png')
+        self.undo=tk.PhotoImage(file='undo.png')
+        self.redo = tk.PhotoImage(file='redo.png')
+        self.copy = tk.PhotoImage(file='copy.png')
+        self.past = tk.PhotoImage(file='past.png')
+        self.set = tk.PhotoImage(file='set.png')
+        self.delt_actv=tk.PhotoImage(file='delete_activate.png')
+
+
+        self.x=self.y=0
+
+        menu_bar=Frame(master,bg='white')
+        menu_bar.pack(side=TOP,fill=X)
+        cnvas=Canvas(master,bg='red',height=2)
+        cnvas.pack(fill='x')
+
+
+        convert_p = Label(menu_bar,text='Convert to Python file' ,image=self.set,compound='left',bg='white')
+        convert_p.pack(side='top')
+        convert_p.bind('<Button-1>',self.convert)
+
+
+
+
+        MENU_frame=Frame(master,height=75)
+        MENU_frame.pack(side=TOP,fill=X)
+
+# =========================================================================================================================
+
+        f = Frame(master)
+        f.pack()
+        main_frame = Canvas(f, highlightbackground="green",  bg='tan',
+                            highlightcolor="green", highlightthickness=2, scrollregion=(0, 0, "20i", "20i")  )
+
+        main_frame.pack( fill='both', anchor=S, expand=True)
+
+        self.view_frame = self.drawing=main_frame
+
+        width = Canvas(main_frame, height=5, width='19.5i', bg="green")
+        width.pack(fill=X, side=TOP)
+
+        h1 = Canvas(main_frame, width=5, height='18i', bg="green")
+        h1.pack(fill=Y, side=LEFT)
+
+        # ========================================================================================================
+        side=Frame(MENU_frame,width=25)
+        side.grid(row=0,column=0,padx=10)
+
+        F_M=Frame(MENU_frame)
+        F_M.grid(row=0,column=1,padx=10)
+        function_=Frame(MENU_frame)
+        function_.grid(row=0,column=2,padx=10)
+
+
+        shap_f =Frame(MENU_frame)
+        shap_f.grid(row=0, column=3, padx=10)
+
+        color_=Frame(MENU_frame)
+        color_.grid(row=0, column=4, padx=10)
+        self.delete=Button(MENU_frame,image=self.delt,command=lambda :self.remove('delt','cmd'),
+                           activebackground = "SystemButtonFace",background = "SystemButtonFace",
+                           bd = "2",bg = "SystemButtonFace",borderwidth = "2",highlightbackground = "SystemButtonFace",
+                           highlightcolor = "SystemWindowFrame",relief = "flat")
+        self.delete.grid(row=0,column=5,padx=10)
+
+
+# ====================Tab Create============================================================
+
+
+
+
+        font_frame = Frame(F_M)
+        font_frame.grid(row=0,column=0,pady=2)
+
+
+        fonts = font.families()
+        self.font_list=ttk.Combobox(font_frame,values=fonts)
+        self.font_list.insert(tk.END,"select Font")
+        self.font_list['state']="readonly"
+        self.font_list.grid(row=0,column=0,padx=5)
+        self.font_list.bind("<<ComboboxSelected>>",self.txt_edt)
+        for i in range(9,76):
+            size.append(i)
+
+        self.font_size=ttk.Combobox(font_frame,values=size,width=5,state ="readonly")
+        self.font_size.current(0)
+        self.font_size.grid(row=0,column=1,padx=5)
+        self.font_size.bind("<<ComboboxSelected>>", self.txt_edt)
+
+        font_sty=Frame(F_M)
+        font_sty.grid(row=1,column=0,pady=2)
+
+
+
+# ==========================================================================================================
+        function_tab= Frame(function_)
+        function_tab.pack()
+
+        label = Button(function_tab, text="    Label     ", relief="solid", fg="red",command=
+        lambda: self.func('Label',Label(self.view_frame,  width=10,text="Label", command=None)))
+        label.grid(row=0, column=0, padx=8, pady=10)
+        button_ = Button(function_tab, text="Button", relief="solid", fg="red", command=
+        lambda: self.func('Button',Button(self.view_frame, width=10, text="Button", command=None))
+                         )
+        button_.grid(row=0, column=1, padx=8)
+
+        radio_button = Button(function_tab, text="Radio Button", relief="solid", fg="red", command=
+        lambda: self.func('Radiobutton',Radiobutton(self.view_frame, text="Button", value=0, command=None))
+                              )
+        radio_button.grid(row=0, column=2, padx=8)
+
+        checked_button = Button(function_tab, text="Check Box", relief="solid", fg="red", command=
+        lambda: self.func('Checkbutton',Checkbutton(self.view_frame, text="Button", command=None))
+                                )
+        checked_button.grid(row=1, column=0, padx=8, pady=5)
+
+        entry_ = Button(function_tab, text="  Entry ", relief="solid", fg="red", command=
+        lambda: self.func('Entry',Entry(self.view_frame))
+                        )
+        entry_.grid(row=1, column=1, padx=8, pady=5)
+
+        text_box = Button(function_tab, text="    Text Box    ", relief="solid", fg="red", command=
+        lambda: self.func('Text',Text(self.view_frame, width=25, height=10))
+
+                          )
+        text_box.grid(row=1, column=2, padx=8, pady=5)
+
+
+
+
+
+
+
+
+
+#=================================================================================================
+
+
+        color = tk.Frame(color_)
+        color.pack()
+
+        color_frame = Frame(color, bg=scale_color)
+        color_frame.grid(row=0, column=1)
+        color = Frame(color_frame, bg=scale_color)
+        color.grid(row=0, column=0)
+        colors = ['white smoke', 'light slate blue', 'royal blue', 'blue',
+                  'dodger blue', 'sky blue', 'dark green', 'green', 'light green',
+                  'dark khaki', 'yellow', 'gold', 'dark goldenrod', 'rosy brown',
+                  'indian red', 'saddle brown', 'red', 'red4', 'plum2', 'gray42']
+
+        i = -1
+        j = 0
+        for cl in colors:
+            i = i + 1
+            if (i == 10):
+                j = j + 1
+                i = 0
+                c_b = tk.Label(color, bg=cl, state='disable', relief="ridge", width=2, height=1)
+                c_b.grid(row=j, column=i,padx=2,pady=2)
+                c_b.bind('<1>', self.bg_edt)
+            else:
+                c_b = tk.Label(color, bg=cl, state='disable', relief="ridge", width=2, height=1)
+                c_b.grid(row=j, column=i,padx=2,pady=2)
+                c_b.bind('<1>',self.bg_edt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#########========================================================================================================================
+
+
+        shaps = Frame(shap_f)
+        shaps.pack(pady=10)
+
+        line = Canvas(shaps, width='0.3i', height='0.3i')
+        line.grid(row=0, column=0, padx=5)
+        line_draw = line.create_line(0, 0, "0.25i", "0.25i")
+        line.bind(sequence='<Button-1>', func=lambda x: self.draw(x, self.drawing.create_line,"self.drawing.create_line("))
+
+        oval = Canvas(shaps, width='0.3i', height='0.3i')
+        oval.grid(row=0, column=1, padx=5)
+        oval_draw = oval.create_oval(2, 2, "0.3i", "0.3i")
+        oval.bind(sequence='<Button-1>', func=lambda x: self.draw(x, self.drawing.create_oval,"self.drawing.create_oval("))
+
+        arc = Canvas(shaps, width='0.3i', height='0.3i')
+        arc.grid(row=0, column=2, padx=5)
+        arc_draw = arc.create_arc(-25, 3, "0.3i", "0.4i", start=0, extent=90)
+        arc.bind(sequence='<Button-1>', func=lambda x: self.draw(x, self.drawing.create_arc,"self.drawing.create_arc("))
+
+        rect = Canvas(shaps, width='0.3i', height='0.3i')
+        rect.grid(row=0, column=3, padx=5)
+        rect_draw = rect.create_rectangle(2, 2, "0.3i", "0.3i")
+        rect.bind(sequence='<Button-1>', func=lambda x: self.draw(x, self.drawing.create_rectangle,"self.drawing.create_rectangle("))
+#==###########-===================================================================================================================
+
+        Widget.bind(self.view_frame, "<3>", self.mouse_clk)
+        Widget.bind(self.view_frame, "<B3-Motion>", self.obj_Move)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#=========================================###########                       #############===========================================
+
+                                                        #'''COMMAND'''
+
+
+
+
+
+    def func(self,val,itm):
+
+        self.view_frame['cursor'] = "cross"
+        self.view_frame.bind("<ButtonPress-1>",lambda x:self.create_button(x,itm,val))
+
+
+    def create_button(self, event,itm,val):
+        self.start_x = event.x
+        self.start_y = event.y
+        btnn=itm
+        btnn.place(x=self.start_x,y=self.start_y)
+        btn_data[btnn]=val
+
+        btnn.bind('<Double-Button-1>', self.txt_edt)
+        btnn.bind('<Double-Button-3>', lambda x:self.resize(x,'btn',val))
+        btnn.bind('<Button-1>', lambda x:self.bg_confg(x,'btn',val))
+        btnn.bind('<Button-3>',lambda x:self.remove(x,'btn'))
+        btnn.bind("<B3-Motion>", self.btn_move)
+        self._release()
+
+    def draw(self,event,ret,val):
+
+        if (event.widget['bg'] == 'white'):
+            event.widget['bg'] = 'red'
+            self.drawing['cursor'] = "cross"
+
+            self.drawing.bind("<ButtonPress-1>", lambda x:self.create_shap(x,ret,val))
+            self.drawing.bind("<B1-Motion>", lambda x:self.shap_set(x,val))
+
+
+        else:
+            event.widget['bg'] = 'white'
+            self._release()
+
+    def create_shap(self, event,shap,val):
+        self.start_x = event.x
+        self.start_y = event.y
+        self.rect = shap(self.x, self.y, 1, 1,fill='red')
+
+        self.drawing.tag_bind(self.rect,"<Button-1>",lambda x:self.shap_edt(x,val))
+        self.drawing.tag_bind(self.rect,"<Button-3>",lambda x:self.remove(x,'shap'))
+        self.drawing.tag_bind(self.rect,'<Double-Button-3>', lambda x:self.resize(x,'shap',val))
+
+
+    def shap_set(self, event,val):
+        self.curX, self.curY = (event.x, event.y)
+        self.drawing.coords(self.rect, self.start_x, self.start_y, self.curX, self.curY)
+        col = self.drawing.itemcget(self.rect, 'fill')
+        coord = self.drawing.coords(self.rect)
+        Val = str(f'{val}{coord},fill="{col}")')
+        shap_data[self.rect] = Val
+
+
+
+    def mouse_clk(self, event):
+        self.lastx = event.x
+        self.lasty = event.y
+
+    def obj_Move(self, event):
+        self.view_frame.move(CURRENT, event.x - self.lastx, event.y - self.lasty)
+        self.lastx = event.x
+        self.lasty = event.y
+
+    def txt_edt(self,event):
+
+        font_style = font.Font(family=self.font_list.get(),size=self.font_size.get())
+        try:
+            btn=event.widget
+            txt=event.widget['text']
+            ent=Entry(event.widget,font=font_style)
+            ent.place(x=0,y=0)
+            ent.insert(0,txt)
+            ent.bind('<Return>', lambda x: self.txt_updat(self, ent, btn,font_style))
+            self.drawing.bind('<1>', lambda x: self.txt_updat(self, ent, btn,font_style))
+        except:
+            pass
+
+    def txt_updat(self,event,txt,btn,font_s):
+        btn['text']=txt.get()
+        btn['font'] =font_s
+        txt.destroy()
+        self._release()
+
+    def bg_edt(self,event):
+        p = event.widget['bg']
+        self.bg_confg(p, 'none','none')
+
+
+
+
+
+    def bg_confg(self,event,val,fuc):
+        try:
+            if (val == 'btn'):
+                event.widget['bg'] = self.col
+            elif (val == 'shap'):
+                self.view_frame.itemconfigure(event, fill=self.col)
+                col= self.drawing.itemcget(event, 'fill')
+                coord=self.drawing.coords(event)
+                data = str(f'{fuc}{coord},fill="{col}")')
+                shap_data[event]=data
+            elif (val == 'none'):
+                self.col = event
+        except:
+            pass
+
+
+    def shap_edt(self,event,val):
+        items = self.drawing.find_closest(event.x, event.y)
+        evt = items[0]
+        self.bg_confg(evt,'shap',val)
+
+
+
+    def btn_move(self,event):
+        btn= event.widget
+        locx, locy = btn.winfo_x(), btn.winfo_y()
+        xpos = (locx + event.x)
+        ypos = (locy + event.y)
+        btn.place(x=xpos, y=ypos)
+
+
+    def resize(self, event, val,fuc):
+        def re(event):
+            try:
+                try:
+                    self.btn_ff.destroy()
+                except:
+                    self.shap_ff.destroy()
+                self.btn_ff.destroy()
+                self.shap_ff.destroy()
+
+
+            except:
+                pass
+        re(None)
+        self.view_frame.bind('<1>',re)
+
+
+
+        if (val == 'shap'):
+            items = self.drawing.find_closest(event.x, event.y)
+            evt = items[0]
+            self.shap_ff = Frame(self.view_frame)
+            self.shap_ff.pack(side='bottom',pady=25)
+            l_w = ttk.Scale(self.shap_ff, from_=0, to=1000, length=850,
+                            )
+            l_w.pack(anchor=CENTER)
+            l_w.set(self.start_x)
+            r_w = ttk.Scale(self.shap_ff, from_=0, to=1000, length=850,
+                            )
+            r_w.pack(anchor=CENTER)
+            r_w.set(self.curX)
+            u_h = ttk.Scale(self.shap_ff, from_=0, to=1000, length=850)
+            u_h.pack(anchor=CENTER)
+            u_h.set(self.start_y)
+            d_h = ttk.Scale(self.shap_ff, from_=0, to=1000, length=850,
+                            )
+            d_h.pack(anchor=CENTER)
+            d_h.set(self.curY)
+
+            l_w['command'] = (
+                lambda x: self.shp_resize(evt,fuc, int(l_w.get()), int(r_w.get()), int(u_h.get()), int(d_h.get())))
+            r_w['command'] = (
+                lambda x: self.shp_resize(evt, fuc,int(l_w.get()), int(r_w.get()), int(u_h.get()), int(d_h.get())))
+            u_h['command'] = (
+                lambda x: self.shp_resize(evt,fuc, int(l_w.get()), int(r_w.get()), int(u_h.get()), int(d_h.get())))
+            d_h['command'] = (
+                lambda x: self.shp_resize(evt,fuc, int(l_w.get()), int(r_w.get()), int(u_h.get()), int(d_h.get())))
+
+
+        elif (val == 'btn'):
+            self.btn_ff = Frame(self.view_frame)
+            self.btn_ff.pack(side='bottom',pady=25)
+            btttn = event.widget
+            try:
+                btn_w = event.widget['width']
+                w = ttk.Scale(self.btn_ff, from_=0, to=100, length=450, command=lambda x: btttn.config(width=int(w.get())))
+                w.pack(anchor=CENTER)
+                w.set(btn_w)
+            except:
+                pass
+            try:
+                btn_h = event.widget['height']
+                h = ttk.Scale(self.btn_ff, from_=0, to=100, length=450, command=lambda x: btttn.config(height=int(h.get())))
+                h.pack(anchor=CENTER)
+                h.set(btn_h)
+
+            except:
+                def validate(action, index, value_if_allowed,
+                             prior_value, text, validation_type, trigger_type, widget_name):
+                    if value_if_allowed:
+                        try:
+                            float(value_if_allowed)
+                            return True
+                        except ValueError:
+                            return False
+                    else:
+                        return False
+
+                vcmd = (self.btn_ff.register(validate),
+                        '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+
+                ht = Entry(self.btn_ff, width=12, bd=5, validate='key', validatecommand=vcmd, bg='tan', highlightthickness=2,
+                           highlightcolor="blue", highlightbackground='green')
+                ht.pack(side='left', pady=5)
+
+                def up(event):
+                    try:
+                        btttn.place(height=ht.get())
+
+                    except:
+                        l = Label(self.btn_ff, text="Height Not Editable")
+                        l.pack(side="left", padx=10)
+                        ht['state'] = 'disable'
+
+                ht.bind('<Return>', lambda x: up(x))
+
+    def shp_resize(self, itm,fuc, l_w, r_w, u_h, d_h):
+        self.drawing.coords(itm, l_w, u_h, r_w, d_h)
+        coord = self.drawing.coords(itm)
+        col=self.drawing.itemcget(itm,"fill")
+        data=str(f'{fuc}{coord},fill={col}')
+        shap_data[itm] = data
+
+    def remove(self, event, val):
+        try:
+            if (event == 'delt'):
+                self.rmv = 'activate'
+                self.delete['image'] = self.delt_actv
+            else:
+                try:
+                    if (self.rmv == 'activate'):
+                        if (val == 'shap'):
+                            try:
+                                items = self.view_frame.find_closest(event.x, event.y)
+                                evt = items[0]
+                                self.view_frame.delete(evt)
+                                del shap_data[evt]
+                                self.rmv = None
+                                self.delete['image']=self.delt
+
+                            except:
+                                pass
+                        else:
+                            try:
+                                event.widget.destroy()
+                                del btn_data[event.widget]
+                                self.rmv = None
+                                self.delete['image'] = self.delt
+
+                            except:
+                                pass
+                except:
+                    pass
+        except:
+            pass
+
+
+
+    def convert(self,event):
+        self.floater = Con(self)
+        
+
+
+    def _release(self):
+
+
+        self.view_frame['cursor'] = "arrow"
+        self.drawing.unbind("<ButtonPress-1>",None)
+        self.drawing.unbind("<B1-Motion>",None)
+
+#######################################################===========================================================
+window =Main_info()
+
+window.geometry('876x486')
+
+window.mainloop()
